@@ -26,6 +26,11 @@ uploads/
 *.swp
 *.swo
 
+# Claude Code local memory
+CLAUDE.local.md
+
 # OS
 .DS_Store
 Thumbs.db
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md
