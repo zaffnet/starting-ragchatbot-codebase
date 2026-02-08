@@ -29,6 +29,9 @@ uploads/
 # Claude Code local memory
 CLAUDE.local.md
 
+# Playwright MCP artifacts
+.playwright-mcp/
+
 # OS
 .DS_Store
 Thumbs.db
