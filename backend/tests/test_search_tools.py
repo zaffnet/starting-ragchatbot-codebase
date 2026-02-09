@@ -3,10 +3,10 @@ import pytest
 from vector_store import SearchResults
 from search_tools import CourseSearchTool, ToolManager
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_store(**overrides):
     """Return a MagicMock VectorStore with sensible defaults."""
@@ -22,6 +22,7 @@ def _make_store(**overrides):
 # ---------------------------------------------------------------------------
 # CourseSearchTool.execute – success / empty / error
 # ---------------------------------------------------------------------------
+
 
 class TestCourseSearchToolExecute:
     def test_successful_search_returns_formatted_results(self):
@@ -105,6 +106,7 @@ class TestCourseSearchToolExecute:
 # _format_results – header formatting and source URL tracking
 # ---------------------------------------------------------------------------
 
+
 class TestFormatResults:
     def test_header_without_lesson(self):
         store = _make_store()
@@ -155,6 +157,7 @@ class TestFormatResults:
 # ---------------------------------------------------------------------------
 # ToolManager
 # ---------------------------------------------------------------------------
+
 
 class TestToolManager:
     def _registered_manager(self):

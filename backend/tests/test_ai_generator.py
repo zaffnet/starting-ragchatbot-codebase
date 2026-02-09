@@ -2,10 +2,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from ai_generator import AIGenerator
 
-
 # ---------------------------------------------------------------------------
 # Mock response helpers
 # ---------------------------------------------------------------------------
+
 
 def _text_block(text):
     block = MagicMock()
@@ -34,6 +34,7 @@ def _mock_response(content_blocks, stop_reason="end_turn"):
 # Tests — Direct Answers
 # ---------------------------------------------------------------------------
 
+
 class TestAIGeneratorDirectAnswer:
     @patch("ai_generator.anthropic.Anthropic")
     def test_direct_answer_no_tools(self, MockAnthropic):
@@ -56,7 +57,9 @@ class TestAIGeneratorDirectAnswer:
         )
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
-        tools = [{"name": "search_course_content", "description": "...", "input_schema": {}}]
+        tools = [
+            {"name": "search_course_content", "description": "...", "input_schema": {}}
+        ]
         result = gen.generate_response(query="What is 2+2?", tools=tools)
 
         assert result == "General answer"
@@ -69,17 +72,17 @@ class TestAIGeneratorDirectAnswer:
 # Tests — Single Tool Round
 # ---------------------------------------------------------------------------
 
+
 class TestAIGeneratorSingleToolRound:
     @patch("ai_generator.anthropic.Anthropic")
     def test_single_tool_round_flow(self, MockAnthropic):
         """One tool call → text response = 2 API calls."""
         client = MockAnthropic.return_value
 
-        first_resp = _mock_response(
-            [_tool_use_block()], stop_reason="tool_use"
-        )
+        first_resp = _mock_response([_tool_use_block()], stop_reason="tool_use")
         second_resp = _mock_response(
-            [_text_block("Based on the search, the answer is X.")], stop_reason="end_turn"
+            [_text_block("Based on the search, the answer is X.")],
+            stop_reason="end_turn",
         )
         client.messages.create.side_effect = [first_resp, second_resp]
 
@@ -87,7 +90,9 @@ class TestAIGeneratorSingleToolRound:
         tool_manager.execute_tool.return_value = "search result text"
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
-        tools = [{"name": "search_course_content", "description": "...", "input_schema": {}}]
+        tools = [
+            {"name": "search_course_content", "description": "...", "input_schema": {}}
+        ]
         result = gen.generate_response(
             query="What is ML?", tools=tools, tool_manager=tool_manager
         )
@@ -113,7 +118,8 @@ class TestAIGeneratorSingleToolRound:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -142,7 +148,8 @@ class TestAIGeneratorSingleToolRound:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -153,6 +160,7 @@ class TestAIGeneratorSingleToolRound:
 # ---------------------------------------------------------------------------
 # Tests — Two Tool Rounds
 # ---------------------------------------------------------------------------
+
 
 class TestAIGeneratorTwoToolRounds:
     @patch("ai_generator.anthropic.Anthropic")
@@ -165,7 +173,7 @@ class TestAIGeneratorTwoToolRounds:
         )
         second_resp = _mock_response(
             [_tool_use_block(tool_id="t2", input_data={"query": "second"})],
-            stop_reason="tool_use"
+            stop_reason="tool_use",
         )
         final_resp = _mock_response(
             [_text_block("Combined answer.")], stop_reason="end_turn"
@@ -176,7 +184,9 @@ class TestAIGeneratorTwoToolRounds:
         tool_manager.execute_tool.return_value = "result"
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
-        tools = [{"name": "search_course_content", "description": "...", "input_schema": {}}]
+        tools = [
+            {"name": "search_course_content", "description": "...", "input_schema": {}}
+        ]
         result = gen.generate_response(
             query="Compare courses", tools=tools, tool_manager=tool_manager
         )
@@ -196,9 +206,7 @@ class TestAIGeneratorTwoToolRounds:
         second_resp = _mock_response(
             [_tool_use_block(tool_id="t2")], stop_reason="tool_use"
         )
-        final_resp = _mock_response(
-            [_text_block("done")], stop_reason="end_turn"
-        )
+        final_resp = _mock_response([_text_block("done")], stop_reason="end_turn")
         client.messages.create.side_effect = [first_resp, second_resp, final_resp]
 
         tool_manager = MagicMock()
@@ -206,7 +214,8 @@ class TestAIGeneratorTwoToolRounds:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -214,11 +223,11 @@ class TestAIGeneratorTwoToolRounds:
         messages = final_call_kwargs["messages"]
 
         assert len(messages) == 5
-        assert messages[0]["role"] == "user"       # original query
-        assert messages[1]["role"] == "assistant"   # tool_use 1
-        assert messages[2]["role"] == "user"        # tool_result 1
-        assert messages[3]["role"] == "assistant"   # tool_use 2
-        assert messages[4]["role"] == "user"        # tool_result 2
+        assert messages[0]["role"] == "user"  # original query
+        assert messages[1]["role"] == "assistant"  # tool_use 1
+        assert messages[2]["role"] == "user"  # tool_result 1
+        assert messages[3]["role"] == "assistant"  # tool_use 2
+        assert messages[4]["role"] == "user"  # tool_result 2
 
     @patch("ai_generator.anthropic.Anthropic")
     def test_two_rounds_final_call_has_no_tools(self, MockAnthropic):
@@ -231,9 +240,7 @@ class TestAIGeneratorTwoToolRounds:
         second_resp = _mock_response(
             [_tool_use_block(tool_id="t2")], stop_reason="tool_use"
         )
-        final_resp = _mock_response(
-            [_text_block("done")], stop_reason="end_turn"
-        )
+        final_resp = _mock_response([_text_block("done")], stop_reason="end_turn")
         client.messages.create.side_effect = [first_resp, second_resp, final_resp]
 
         tool_manager = MagicMock()
@@ -241,7 +248,8 @@ class TestAIGeneratorTwoToolRounds:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -253,9 +261,7 @@ class TestAIGeneratorTwoToolRounds:
         """Even if Claude keeps requesting tools, stops after MAX_TOOL_ROUNDS."""
         client = MockAnthropic.return_value
 
-        tool_resp = _mock_response(
-            [_tool_use_block()], stop_reason="tool_use"
-        )
+        tool_resp = _mock_response([_tool_use_block()], stop_reason="tool_use")
         final_resp = _mock_response(
             [_text_block("forced answer")], stop_reason="end_turn"
         )
@@ -267,7 +273,8 @@ class TestAIGeneratorTwoToolRounds:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         result = gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -280,9 +287,7 @@ class TestAIGeneratorTwoToolRounds:
         """Claude uses tool in round 1, answers directly in round 2 → 2 API calls."""
         client = MockAnthropic.return_value
 
-        first_resp = _mock_response(
-            [_tool_use_block()], stop_reason="tool_use"
-        )
+        first_resp = _mock_response([_tool_use_block()], stop_reason="tool_use")
         second_resp = _mock_response(
             [_text_block("answer after one search")], stop_reason="end_turn"
         )
@@ -293,7 +298,8 @@ class TestAIGeneratorTwoToolRounds:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         result = gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -305,6 +311,7 @@ class TestAIGeneratorTwoToolRounds:
 # Tests — Error Handling
 # ---------------------------------------------------------------------------
 
+
 class TestAIGeneratorErrorHandling:
     @patch("ai_generator.anthropic.Anthropic")
     def test_tool_exception_sends_error_and_terminates(self, MockAnthropic):
@@ -314,9 +321,7 @@ class TestAIGeneratorErrorHandling:
         first_resp = _mock_response(
             [_tool_use_block(tool_id="t1")], stop_reason="tool_use"
         )
-        final_resp = _mock_response(
-            [_text_block("recovered")], stop_reason="end_turn"
-        )
+        final_resp = _mock_response([_text_block("recovered")], stop_reason="end_turn")
         client.messages.create.side_effect = [first_resp, final_resp]
 
         tool_manager = MagicMock()
@@ -324,7 +329,8 @@ class TestAIGeneratorErrorHandling:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         result = gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -344,9 +350,7 @@ class TestAIGeneratorErrorHandling:
         """Tool returns error string (not exception) → flows normally as tool_result."""
         client = MockAnthropic.return_value
 
-        first_resp = _mock_response(
-            [_tool_use_block()], stop_reason="tool_use"
-        )
+        first_resp = _mock_response([_tool_use_block()], stop_reason="tool_use")
         second_resp = _mock_response(
             [_text_block("no results found")], stop_reason="end_turn"
         )
@@ -357,7 +361,8 @@ class TestAIGeneratorErrorHandling:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         result = gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=tool_manager,
         )
 
@@ -375,7 +380,8 @@ class TestAIGeneratorErrorHandling:
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
         result = gen.generate_response(
-            query="q", tools=[{"name": "t", "description": "", "input_schema": {}}],
+            query="q",
+            tools=[{"name": "t", "description": "", "input_schema": {}}],
             tool_manager=None,
         )
 
@@ -386,6 +392,7 @@ class TestAIGeneratorErrorHandling:
 # Tests — Params and Constants
 # ---------------------------------------------------------------------------
 
+
 class TestAIGeneratorParams:
     @patch("ai_generator.anthropic.Anthropic")
     def test_conversation_history_in_system_prompt(self, MockAnthropic):
@@ -395,7 +402,9 @@ class TestAIGeneratorParams:
         )
 
         gen = AIGenerator(api_key="fake", model="claude-sonnet-4-20250514")
-        gen.generate_response(query="q", conversation_history="User: hi\nAssistant: hello")
+        gen.generate_response(
+            query="q", conversation_history="User: hi\nAssistant: hello"
+        )
 
         call_kwargs = client.messages.create.call_args[1]
         assert "Previous conversation:" in call_kwargs["system"]

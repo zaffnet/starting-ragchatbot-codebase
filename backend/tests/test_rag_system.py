@@ -3,26 +3,24 @@ import pytest
 from vector_store import SearchResults
 from config import Config
 
-
 # ---------------------------------------------------------------------------
 # Config propagation
 # ---------------------------------------------------------------------------
+
 
 class TestRAGSystemInit:
     def test_default_max_results_is_positive(self):
         """Regression guard: MAX_RESULTS must be >= 1 for ChromaDB."""
         cfg = Config()
-        assert cfg.MAX_RESULTS >= 1, (
-            f"MAX_RESULTS={cfg.MAX_RESULTS} would cause ChromaDB query errors"
-        )
+        assert (
+            cfg.MAX_RESULTS >= 1
+        ), f"MAX_RESULTS={cfg.MAX_RESULTS} would cause ChromaDB query errors"
 
     @patch("rag_system.SessionManager")
     @patch("rag_system.DocumentProcessor")
     @patch("rag_system.AIGenerator")
     @patch("rag_system.VectorStore")
-    def test_max_results_passed_to_vector_store(
-        self, MockVS, MockAI, MockDP, MockSM
-    ):
+    def test_max_results_passed_to_vector_store(self, MockVS, MockAI, MockDP, MockSM):
         from rag_system import RAGSystem
 
         config = MagicMock()
@@ -44,9 +42,7 @@ class TestRAGSystemInit:
     @patch("rag_system.DocumentProcessor")
     @patch("rag_system.AIGenerator")
     @patch("rag_system.VectorStore")
-    def test_init_max_results_zero_propagates(
-        self, MockVS, MockAI, MockDP, MockSM
-    ):
+    def test_init_max_results_zero_propagates(self, MockVS, MockAI, MockDP, MockSM):
         """Proves that MAX_RESULTS=0 from config is passed directly to VectorStore."""
         from rag_system import RAGSystem
 
@@ -69,13 +65,16 @@ class TestRAGSystemInit:
 # Query flow
 # ---------------------------------------------------------------------------
 
+
 class TestRAGSystemQuery:
     def _make_rag(self, max_results=5):
         """Build a RAGSystem with all heavy deps mocked out."""
-        with patch("rag_system.VectorStore") as MockVS, \
-             patch("rag_system.AIGenerator") as MockAI, \
-             patch("rag_system.DocumentProcessor"), \
-             patch("rag_system.SessionManager") as MockSM:
+        with (
+            patch("rag_system.VectorStore") as MockVS,
+            patch("rag_system.AIGenerator") as MockAI,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSM,
+        ):
 
             config = MagicMock()
             config.MAX_RESULTS = max_results
@@ -88,6 +87,7 @@ class TestRAGSystemQuery:
             config.MAX_HISTORY = 2
 
             from rag_system import RAGSystem
+
             rag = RAGSystem(config)
             return rag, MockAI, MockSM
 
@@ -106,7 +106,9 @@ class TestRAGSystemQuery:
 
     def test_query_retrieves_history_for_session(self):
         rag, _, _ = self._make_rag()
-        rag.session_manager.get_conversation_history.return_value = "User: hi\nAssistant: hello"
+        rag.session_manager.get_conversation_history.return_value = (
+            "User: hi\nAssistant: hello"
+        )
         rag.ai_generator.generate_response.return_value = "answer"
 
         rag.query("follow up", session_id="s1")
@@ -147,6 +149,7 @@ class TestRAGSystemQuery:
 # End-to-end bug reproduction
 # ---------------------------------------------------------------------------
 
+
 class TestRAGSystemBugE2E:
     @patch("rag_system.SessionManager")
     @patch("rag_system.DocumentProcessor")
@@ -180,7 +183,9 @@ class TestRAGSystemBugE2E:
         # First call: Claude decides to use the search tool
         # We mock generate_response to actually call tool_manager.execute_tool
         # so we can verify the error propagates
-        def fake_generate(query, conversation_history=None, tools=None, tool_manager=None):
+        def fake_generate(
+            query, conversation_history=None, tools=None, tool_manager=None
+        ):
             if tool_manager:
                 result = tool_manager.execute_tool(
                     "search_course_content", query="test query"

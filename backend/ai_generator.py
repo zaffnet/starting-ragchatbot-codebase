@@ -1,6 +1,7 @@
 import anthropic
 from typing import List, Optional, Dict, Any
 
+
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
 
@@ -36,16 +37,15 @@ Provide only the direct answer to what was asked.
         self.model = model
 
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
 
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
         Supports up to MAX_TOOL_ROUNDS of tool calls before forcing a text response.
@@ -61,7 +61,11 @@ Provide only the direct answer to what was asked.
         messages = [{"role": "user", "content": query}]
 
         for round_num in range(self.MAX_TOOL_ROUNDS):
-            api_params = {**self.base_params, "messages": messages, "system": system_content}
+            api_params = {
+                **self.base_params,
+                "messages": messages,
+                "system": system_content,
+            }
             if tools:
                 api_params["tools"] = tools
                 api_params["tool_choice"] = {"type": "auto"}
@@ -72,12 +76,18 @@ Provide only the direct answer to what was asked.
                 return self._extract_text(response)
 
             # Execute tools, accumulate messages
-            messages, tool_failed = self._execute_tool_round(messages, response, tool_manager)
+            messages, tool_failed = self._execute_tool_round(
+                messages, response, tool_manager
+            )
             if tool_failed:
                 break
 
         # Exhausted rounds or tool failed — final call WITHOUT tools
-        final_params = {**self.base_params, "messages": messages, "system": system_content}
+        final_params = {
+            **self.base_params,
+            "messages": messages,
+            "system": system_content,
+        }
         final_response = self.client.messages.create(**final_params)
         return self._extract_text(final_response)
 
@@ -98,18 +108,19 @@ Provide only the direct answer to what was asked.
             if content_block.type == "tool_use":
                 try:
                     tool_result = tool_manager.execute_tool(
-                        content_block.name,
-                        **content_block.input
+                        content_block.name, **content_block.input
                     )
                 except Exception as e:
                     tool_result = f"Error executing tool: {e}"
                     tool_failed = True
 
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": content_block.id,
-                    "content": tool_result
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": content_block.id,
+                        "content": tool_result,
+                    }
+                )
 
         if tool_results:
             messages.append({"role": "user", "content": tool_results})
