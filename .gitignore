@@ -26,8 +26,9 @@ uploads/
 *.swp
 *.swo
 
-# Claude Code local memory
+# Claude Code local config
 CLAUDE.local.md
+.claude/settings.local.json
 
 # Playwright MCP artifacts
 .playwright-mcp/
